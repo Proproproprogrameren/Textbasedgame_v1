@@ -11,11 +11,10 @@ import java.awt.event.KeyListener;
  */
 public class Controller implements KeyListener {
     private Klasse player;
-    public Controller(Klasse player) {
-        this.player = player;
+    public Controller() {
     }
 
-    public void changePlayer(Klasse player){
+    public void linkPlayer(Klasse player){
         this.player = player;
     }
 

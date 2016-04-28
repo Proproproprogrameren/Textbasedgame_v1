@@ -12,27 +12,36 @@ import java.util.Observer;
  * Created by Sander on 14-3-2016.
  */
 public class View extends JPanel {
+    // All the text on the screen
     private ArrayList<String> text;
+    // The model
     private Klasse player;
+    // menu options
     private String[] menu = {
-        "9. Exit","0. Items"
+            "8. Items",
+        "9. Restart","0. Exit"
     };
-    public View(Klasse player) {
+
+    public View(int width, int height) {
+        setSize(width,height); //Set panel size
+        setVisible(true);
+    }
+
+    public void linkPlayer(Klasse player){
         this.player = player;
-        player.linkView(this);
         this.player.addObserver(new Observer() {
             public void update(Observable o, Object arg) {
                 View.this.repaint();
             }
         });
-        setSize(800,500); //Set panel size
-        setVisible(true);
-        text = new ArrayList<>();
     }
+
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
         // Draws Background
         this.setBackground(new Color(255,255,255));
+
         // Draws Menu
         int i = 0;
         g.setColor(new Color(0, 0, 0));
@@ -41,57 +50,28 @@ public class View extends JPanel {
             g.drawString(s,560,100+15*i);
             i++;
         }
+
         // Draws Level/Exp/Exp required
         g.drawString("Day: " + player.getDay(),560,10);
         g.drawString("Level: " + player.getLevel(),560,25);
         g.drawString("Experience: " + player.getExp(), 560, 40);
         g.drawString("Next Level: " + player.getExpRequired(), 560, 55);
         g.drawString("Hitpoints: " + player.getHitpoints() + "/" + player.getMaxHitpoints(),560,70);
+
         // Draws text
         i = 0;
-        for(String s : getText()){
+        for(String s : player.getText()){
             g.drawString(s,10,10+15*i);
             i++;
         }
+
+        //draw inputline
         g.drawString(Integer.toString(player.getInput()),10,450);
 
     }
-    public void addFastString(String s){
-        if(getText().size()>25) {
-            text.remove(0);
-        }
-        text.add(s);
-        this.repaint();
 
-    }
-    public void addString(String s){
-        try{
-            Thread.sleep(500);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-        addFastString(s);
-    }
-
-    private ArrayList<String> getText(){
-        ArrayList<String> copy = text;
-        return copy;
-    }
-
-    public void clearText(){
-        this.text.clear();
-    }
-
-    public String[] getMenu() {
+    private String[] getMenu() {
         return menu;
     }
 
-    public void changePlayer(Klasse player){
-        this.player = player;
-        this.player.addObserver(new Observer() {
-            public void update(Observable o, Object arg) {
-                View.this.repaint();
-            }
-        });
-    }
 }

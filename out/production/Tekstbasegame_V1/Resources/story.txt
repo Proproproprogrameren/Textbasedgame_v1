@@ -1,0 +1,12 @@
+You're a poor farmer in the kingdom of getRandomName
+A dragon has been terrorizing getRandomName for a while now.
+So you, as the hero that you are, have decided to put an end this drama!
+You’ve given up the noble profession of farming to become a:
+Type 1 for warrior
+Type 2 for mage
+Type 3 for rogue
+You know that as a level one getKlasse you won’t be able to face this dragon for sure,
+so before challenging the dragon you must train.
+You know there are goblin’s roaming the land and perhaps other creatures.
+To fill your days you can track creatures or sleep to regain strength.
+Don’t waste too much time because the dragon will just keep on terrorizing!
