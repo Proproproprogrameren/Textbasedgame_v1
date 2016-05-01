@@ -18,8 +18,10 @@ public class View extends JPanel {
     private Klasse player;
     // menu options
     private String[] menu = {
-            "8. Items",
-        "9. Restart","0. Exit"
+            "S. Stats",
+            "I. Items",
+        "R. Restart",
+            "E. Exit"
     };
 
     public View(int width, int height) {
@@ -66,7 +68,7 @@ public class View extends JPanel {
         }
 
         //draw inputline
-        g.drawString(Integer.toString(player.getInput()),10,450);
+        g.drawString(player.getInputString(),10,450);
 
     }
 

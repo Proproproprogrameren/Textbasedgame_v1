@@ -1,24 +1,20 @@
 package Klassen;
 
 import Items.Item;
-import Items.Kitchen_Knife;
 import Main.TextBasedGame;
 import Monsters.Dragon;
-import Monsters.Goblin;
+import Monsters.Monster1;
 import Monsters.Monster;
-import Monsters.Orc;
+import Monsters.Monster2;
 import Superclassess.AliveObj;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Scanner;
 
 /**
  * Created by Sander on 13-3-2016.
  */
 public class Klasse extends AliveObj{
-
-    
     private static final int EXP_LEVEL_1 = 4000;
 
     private int hitpoints;
@@ -32,128 +28,55 @@ public class Klasse extends AliveObj{
     private long expRequired;
     private boolean inFight;
     private Item equippedItem;
+    //1 is warrior, 2 is mage, 3 is rogue, 0 is not chosen yet
+    private int classChosen;
+
+    private Monster currentFightMonster;
 
     private ArrayList<Monster> knownMonsters = new ArrayList<>();
-
     private ArrayList<Item> inventory = new ArrayList<>();
-
     private ArrayList<String> text = new ArrayList<>();
 
     private Random dice;
     private String name;
 
-    private int input;
+    private char input=' ';
     private boolean waitForInput = true;
-    private boolean interrupted = false;
 
     private TextBasedGame game;
 
-
     public Klasse() {
+        this.classChosen = 0;
         this.exp = 0;
         this.expRequired = EXP_LEVEL_1;
         this.day = 1;
         this.level = 1;
         this.dice = new Random();
         this.name = "default name";
-        this.knownMonsters.add(new Goblin());
+        this.knownMonsters.add(new Monster1());
         this.knownMonsters.add(new Dragon());
     }
 
-    public void initClass(int hitpoints, int damage, int speed, Item startItem){
+    public void initClass(int hitpoints, int damage, int speed, Item startItem, int classChosen){
         this.hitpoints = hitpoints;
         this.maxHitpoints = hitpoints;
         this.damage = damage;
         this.equippedItem = startItem;
         this.speed = speed;
+        this.classChosen = classChosen;
     }
 
     public void linkGame(TextBasedGame game){
         this.game = game;
     }
 
-    public void chooseOption(int n){
-        if(n == 1){
-            sleep();
-        } else {
-            if (getKnownMonsters().size() >= n - 1) {
-                track(getKnownMonsters().get(n - 2));
-            }
-        }
-    }
 
-    private void track(Monster m){
-        addFastString("Tracking " + m + "s...");
-        int i = dice.nextInt(100);
-        //TODO make a track change for a monster dependant of the user level
-        if(i<70){
-            encounters(m);
-        } else {
-            if (i < 98) {
-                encounters(discoverMonster());
-            } else {
-                encounters(new Dragon());
-            }
-        }
-    }
-
-    private Monster discoverMonster(){
-        //TODO discover algorithm
-        Monster m = new Orc();
-        addString("You have discovered: " + m);
-        getKnownMonsters().add(m);
-        return m;
-    }
-
-    private void sleep(){
-        addFastString("Getting some rest...");
-        clearText();
-        hitpoints = maxHitpoints;
-        day++;
-        addString("What a beautiful morning!");
-    }
-
-    public void showOptions(){
-        addString("Type 1 to go to sleep");
-        int i = 2;
-        for(Monster m:getKnownMonsters()){
-            addString("Type " + i + " to track " + m + "s");
-            i++;
-        }
-    }
-
-    public int getDamage(){
-        int i = dice.nextInt(100);
-        if (i<equippedItem.getCritChance()){
-            addString("Crit!");
-            return (int)(damage*1.5);
-        }
-        return damage;
-    }
-
-    public void encounters(Monster m){
-        m.initMonster();
-        addString("You've encounterd a level " + m.getLevel() + " " + m.getName());
-        setInFight(true);
-        while(inFight) {
-            addString("The " + m + " has " + m.getHitpoints() + " hitpoints.");
-            addString("What do you want to do?");
-            addString("1. fight");
-            addString("2. flee");
-            waitForUserInput();
-            int n = getInput();
-            switch (n) {
-                case 1:
-                    fight(m);
-                    break;
-                case 2:
-                    if(flee(m)) {
-                        //flee was succesful
-                        inFight = false;
-                    }
-                    break;
-            }
-        }
+    //<editor-fold desc="Level up system">
+    private void increaseStats(){
+        this.damage+=level+dice.nextInt(level)*2;
+        this.maxHitpoints+=level+dice.nextInt(level)*2;
+        //this.hitpoints = maxHitpoints;
+        this.speed+=dice.nextInt(level);
     }
 
     private void checkLevelUp(){
@@ -162,6 +85,7 @@ public class Klasse extends AliveObj{
             addString("Congratulations! You've gained a level!");
             addString("You are now level: " + this.level);
             expRequired = (expRequired*(190+dice.nextInt(100)+1))/100;
+            increaseStats();
         }
     }
 
@@ -169,12 +93,84 @@ public class Klasse extends AliveObj{
         this.exp += e;
         checkLevelUp();
     }
+    //</editor-fold>
+
+    public static boolean isBetween(int x, int lower, int upper) {
+        return lower <= x && x <= upper;
+    }
+
+
+    private void track(Monster m){
+        addFastString("Tracking " + m + "s...");
+        int i = dice.nextInt(1000);
+        //TODO make a track change for a monster dependant of the user level
+        System.out.println("roll: "  +i);
+        System.out.println("change of finding: " + (898-level*100+200*getKnownMonsters().size()-1));
+
+        //TODO make this dependant on the monster that your tracking
+        if(isBetween(i,0,(898-level*100+200*getKnownMonsters().size()-1))){
+            encounters(m);
+        }
+        else if (isBetween(i,998,1000)){
+            encounters(new Dragon());
+        }
+        else {
+            encounters(discoverMonster());
+        }
+    }
+
+    private Monster discoverMonster(){
+        //TODO discover algorithm
+        Monster m = new Monster2();
+        addString("You have discovered: " + m);
+        getKnownMonsters().add(getKnownMonsters().size()-1,m);
+        return m;
+    }
+
+    public void encounters(Monster m){
+        setInFight(true);
+        currentFightMonster = m.initMonster();
+        addString("You've encounterd a level " + currentFightMonster.getLevel() + " " + currentFightMonster.getName());
+        while(inFight) {
+            addString("The " + m + " has " + m.getHitpoints() + " hitpoints.");
+            addString("What do you want to do?");
+            addString("1. fight");
+            addString("2. flee");
+            game.waitForUserInput(2);
+            int n = getInput();
+            switch (n) {
+                case 1:
+                    fight(m);
+                    break;
+                case 2:
+                    if(flee(m)) {
+                        //flee was succesfull
+                        inFight = false;
+                    }
+                    break;
+            }
+        }
+    }
 
     private void fight(Monster m){
+        boolean b = false;
+        if (classChosen==2) {
+            addString("you can choose to use a spell");
+            addString("type 1 for fireball");
+            addString("type 2 to do nothing");
+            int n = game.waitForUserInput(2);
+            if(n==1){
+                this.damage+=10;
+                b = true;
+            }
+        }
         if(m.getSpeed() < this.getSpeed()){
             hit(this,m);
         } else{
             hit(m,this);
+        }
+        if (b){
+            this.damage-=10;
         }
     }
 
@@ -204,8 +200,7 @@ public class Klasse extends AliveObj{
 
     //returns if the flee was successful and if not deal damage to the player
     private boolean flee(Monster m){
-        int x = dice.nextInt(100);
-        if (x < m.getFlee()){
+        if (getSpeed()+dice.nextInt(getSpeed()) > m.getSpeed()+dice.nextInt(m.getSpeed())){
             addString("Success!");
             return true;
         } else {
@@ -216,82 +211,88 @@ public class Klasse extends AliveObj{
         }
     }
 
-    public void readInput(){
-        if(getInput() == 8){
-            String s="You have a ";
-            for(Item i:getInventory()){
-                s += i + ", ";
+    //<editor-fold desc="Daytime options handling">
+    private void sleep(){
+        addFastString("Getting some rest...");
+        game.wait(500);
+        clearText();
+        hitpoints = maxHitpoints;
+        day++;
+        addString("What a beautiful morning!");
+    }
+
+    public void chooseOption(int n){
+        if(n == 1){
+            sleep();
+        } else {
+            if (getKnownMonsters().size() >= n - 1) {
+                track(getKnownMonsters().get(n - 2));
             }
-            if(equippedItem!=null){
-                addString("Equipped item: "+ equippedItem);
-            }
-            if (getInventory().isEmpty()) {
-                addFastString("Your inventory is empty");
-            } else {
-                addFastString(s);
-            }
-        }
-        if(getInput() == 9){
-            game.resetGame();
-        }
-        if(getInput() == 0){
-            System.exit(0);
-        }
-        //Not a menu option
-        if(getInput()<8){
-            setWaitForInput(false);
         }
     }
 
-    public int waitForUserInput(){
-        setWaitForInput(true);
-        while(isWaitForInput()||interrupted){
-            setWaitForInput(true);
-            try{
-                Thread.sleep(500);
-            } catch(Exception e){
-                e.printStackTrace();
-            }
-
+    public int showOptions(){
+        addString("Type 1 to go to sleep");
+        int i = 2;
+        for(Monster m:getKnownMonsters()){
+            addString("Type " + i + " to track " + m + "s");
+            i++;
         }
-        return getInput();
+        return i;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="input handling">
+    public void exitGame(){
+        System.exit(0);
     }
 
-
-    //Let the thread wait until it gets user input
-    public int waitForUserInput(int upperbound){
-        setWaitForInput(true);
-        while(isWaitForInput()||(getInput()>upperbound)||interrupted){
-            setWaitForInput(true);
-            try{
-                Thread.sleep(500);
-            } catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-        return getInput();
+    public void resetGame(){
+        game.resetGame();
     }
 
-    private void gameover(){
+    public void showInventory(){
+        String s="You have a ";
+        for(Item i:getInventory()){
+            s += i + ", ";
+        }
+        if(equippedItem!=null){
+            addString("Equipped item: "+ equippedItem);
+        }
+        if (getInventory().isEmpty()) {
+            addFastString("Your inventory is empty");
+        } else {
+            addFastString(s);
+        }
+    }
+
+    public void showStats(){
+        if (classChosen!=0) {
+            addFastString("Your damage is: " + getDamage() + " , speed is: " + getSpeed());
+            if (inFight) {
+                addString("The " + currentFightMonster + " damage is: "
+                        + currentFightMonster.getDamage() + " , speed is: " + currentFightMonster.getSpeed()
+                        + " , exp: " + currentFightMonster.getExp());
+            }
+        } else {
+            addFastString("No stats yet!");
+        }
+    }
+
+    public void gameover(){
         addString("You did not achieve to kill the dragon sucker go get yourself a drink and play again");
-        waitForUserInput();
+        game.waitForUserInput();
         game.resetGame();
     }
 
 
-    public void setInput(int key){
-        this.input = key;
-        changed();
-    }
 
-    public ArrayList<Monster> getKnownMonsters() {
-        ArrayList<Monster> copy = knownMonsters;
-        return copy;
-    }
+    //</editor-fold>
 
-    public ArrayList<Item> getInventory() {
-        ArrayList<Item> copy = inventory;
-        return copy;
+    //<editor-fold desc="setters and getters">
+
+    public int getDamage(){
+        return damage;
     }
 
     public void setInFight(boolean inFight) {
@@ -299,7 +300,11 @@ public class Klasse extends AliveObj{
     }
 
     public int getInput() {
-        return input;
+        return (int) input - 48;
+    }
+
+    public String getInputString(){
+        return "" + input;
     }
 
     public boolean isWaitForInput() {
@@ -350,12 +355,30 @@ public class Klasse extends AliveObj{
         return name;
     }
 
-    public void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
+    public ArrayList<String> getText(){
+        ArrayList<String> copy = text;
+        return copy;
     }
 
+    public void setInput(char key){
+        this.input = key;
+        changed();
+    }
+
+    public ArrayList<Monster> getKnownMonsters() {
+        ArrayList<Monster> copy = knownMonsters;
+        return copy;
+    }
+
+    public ArrayList<Item> getInventory() {
+        ArrayList<Item> copy = inventory;
+        return copy;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Text management">
     public void addFastString(String s){
-        if(!interrupted) {
+        if(!game.isInterrupted()) {
             if (getText().size() > 25) {
                 text.remove(0);
             }
@@ -365,17 +388,16 @@ public class Klasse extends AliveObj{
     }
 
     public void addString(String s){
+        if(!game.isInterrupted()){
+            game.wait(500);
+        }
         addFastString(s);
-    }
-
-    public ArrayList<String> getText(){
-        ArrayList<String> copy = text;
-        return copy;
     }
 
     public void clearText(){
         this.text.clear();
     }
+    //</editor-fold>
 
     public void changed(){
         this.setChanged();

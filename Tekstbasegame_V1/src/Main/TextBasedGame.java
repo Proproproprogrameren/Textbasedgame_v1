@@ -3,6 +3,8 @@ package Main;
 
 import Items.Item;
 import Items.Kitchen_Knife;
+import Items.Twig;
+import Items.Wooden_Sword;
 import Klassen.Klasse;
 
 import NameCreate.NameGenerator;
@@ -26,12 +28,12 @@ public class TextBasedGame implements Runnable {
     private static final int MAGE_HP = 12;
     private static final int MAGE_DAMAGE = 3;
     private static final int MAGE_SPEED = 20;
-    private static final Item MAGE_START_ITEM = new Kitchen_Knife();
+    private static final Item MAGE_START_ITEM = new Twig();
 
     private static final int WARRIOR_HP = 12;
     private static final int WARRIOR_DAMAGE = 3;
     private static final int WARRIOR_SPEED = 20;
-    private static final Item WARRIOR_START_ITEM = new Kitchen_Knife();
+    private static final Item WARRIOR_START_ITEM = new Wooden_Sword();
 
 
 
@@ -46,6 +48,7 @@ public class TextBasedGame implements Runnable {
     private int lineNumber;
 
     private boolean waitForInput;
+    private boolean interrupted;
 
     private boolean inStoryMode;
     private boolean inStoryOne;
@@ -66,6 +69,7 @@ public class TextBasedGame implements Runnable {
         this.inStoryOne = false;
 
         this.waitForInput = false;
+        this.interrupted = false;
 
         NameGenerator gen = new NameGenerator();
         randomName = gen.getName();
@@ -81,7 +85,11 @@ public class TextBasedGame implements Runnable {
 
     private void printStoryline(){
         if (lineNumber<getStory().size()) {
-            player.addString(checkGets(getStory().get(lineNumber)));
+            if (lineNumber==0){
+                player.addFastString(checkGets(getStory().get(lineNumber)));
+            } else {
+                player.addString(checkGets(getStory().get(lineNumber)));
+            }
             lineNumber++;
             //Choose class after 7 lines
             if(lineNumber==7){
@@ -91,15 +99,17 @@ public class TextBasedGame implements Runnable {
             if(lineNumber==12) {
                 inStoryMode=false;
                 inStoryOne=true;
-
             }
         } else {
             System.out.println("out of story :(");
         }
-        wait(500);
     }
 
     private void dayTimeActivity(){
+        setWaitForInput(true);
+        input = waitForUserInput(player.showOptions());
+        player.chooseOption(input);
+        setWaitForInput(false);
         wait(500);
     }
 
@@ -111,15 +121,11 @@ public class TextBasedGame implements Runnable {
             }
 
             if(isInStoryOne()) {
-                player.addString("What do you want to do?");
-                System.out.println("daytime activities");
+                player.addFastString("What do you want to do?");
                 dayTimeActivity();
-                //showOptions();
-                //n = waitForUserInput();
-                //chooseOption(n);
             }
         } else {
-            wait(500);
+            wait(100);
         }
     }
 
@@ -131,18 +137,18 @@ public class TextBasedGame implements Runnable {
     }
 
     private void chooseClass(){
-        input = player.waitForUserInput(3);
+        input = waitForUserInput(3);
         if (input==1||input==2||input==3) {
             if (input == 1) {
-                player.initClass(WARRIOR_HP, WARRIOR_DAMAGE, WARRIOR_SPEED, WARRIOR_START_ITEM);
+                player.initClass(WARRIOR_HP, WARRIOR_DAMAGE, WARRIOR_SPEED, WARRIOR_START_ITEM,1);
                 klasse = "warrior";
             }
             if (input == 2) {
-                player.initClass(MAGE_HP, MAGE_DAMAGE, MAGE_SPEED, MAGE_START_ITEM);
+                player.initClass(MAGE_HP, MAGE_DAMAGE, MAGE_SPEED, MAGE_START_ITEM,2);
                 klasse = "mage";
             }
             if (input == 3) {
-                player.initClass(ROGUE_HP, ROGUE_DAMAGE, ROGUE_SPEED, ROGUE_START_ITEM);
+                player.initClass(ROGUE_HP, ROGUE_DAMAGE, ROGUE_SPEED, ROGUE_START_ITEM,3);
                 klasse = "rogue";
             }
             setWaitForInput(false);
@@ -180,7 +186,7 @@ public class TextBasedGame implements Runnable {
     }
 
     public void resetGame(){
-        player.setInterrupted(true);
+        this.interrupted = true;
         this.running = false;
         frame.resetGame();
     }
@@ -219,5 +225,33 @@ public class TextBasedGame implements Runnable {
 
     public void setWaitForInput(boolean waitForInput) {
         this.waitForInput = waitForInput;
+    }
+
+    public boolean isInterrupted() {
+        return interrupted;
+    }
+
+
+    //any input is okay
+    public  int waitForUserInput(){
+        return waitForUserInput(10);
+    }
+
+    //Let the thread wait until it gets user input
+    public int waitForUserInput(int upperbound){
+        player.setWaitForInput(true);
+        while(player.isWaitForInput()||player.getInput()>upperbound) {
+            //setWaitForInput(true);
+            player.setWaitForInput(true);
+            if (interrupted) {
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return player.getInput();
     }
 }
